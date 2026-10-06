@@ -1,17 +1,8 @@
-import { add } from './lib/example';
+import { mount } from 'svelte';
+import App from './ui/App.svelte';
 
-const app = document.querySelector<HTMLDivElement>('#app');
-if (!app) throw new Error('#app not found');
+const target = document.querySelector<HTMLDivElement>('#app');
+if (!target) throw new Error('#app not found');
 
-app.innerHTML = `
-  <header>
-    <a href="https://mustafaobaidd1.github.io/">Portfolio</a>
-    <a href="https://github.com/mustafaobaidd1/strut-topology">Source</a>
-  </header>
-  <main>
-    <h1>Strut — topology optimization in the browser</h1>
-    <p>2 + 3 = ${add(2, 3)}</p>
-  </main>
-`;
-
+mount(App, { target });
 document.documentElement.dataset.ready = 'true';

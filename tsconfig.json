@@ -15,7 +15,7 @@
     "useDefineForClassFields": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "types": ["vite/client", "node"]
+    "types": ["vite/client", "node", "svelte"]
   },
   "include": ["src", "tests", "e2e", "scripts", "vite.config.ts", "playwright.config.ts"]
 }
