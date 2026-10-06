@@ -43,8 +43,9 @@ export class Top88 {
   beta = 1;
   change = 1;
   private readonly solver: ElasticSolver;
-  private readonly Ee: Float64Array;
-  private readonly ce: Float64Array;
+  /** Young's moduli and element energies of the last analysis (read by the views). */
+  readonly Ee: Float64Array;
+  readonly ce: Float64Array;
   private readonly dc: Float64Array;
   private readonly dv: Float64Array;
   private readonly dx: Float64Array;

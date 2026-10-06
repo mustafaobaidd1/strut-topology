@@ -276,7 +276,7 @@ export class Optimizer {
       else if (passive[e] === -1) this.x[e] = 0;
     }
     this.runIteration = 0;
-    this.restartContinuation();
+    this.restartContinuation(true);
     this.updatePhysical(this.x);
   }
 
@@ -296,7 +296,7 @@ export class Optimizer {
       this.params.filter !== prev.filter ||
       this.params.betaMax !== prev.betaMax
     ) {
-      this.restartContinuation();
+      this.restartContinuation(false);
     }
     this.runIteration = 0;
     this.history = [];
@@ -304,11 +304,12 @@ export class Optimizer {
   }
 
   /**
-   * After an edit, a crisp projected design cannot change topology, so β falls back to a soft
-   * value and the continuation is replayed (faster than from scratch).
+   * A crisp projected design can hardly change topology, so after an edit β falls back to a
+   * soft value (at most 2) and the continuation is replayed; a parameter change that alters
+   * the projection itself restarts it from β = 1.
    */
-  private restartContinuation(): void {
-    this.beta = 1;
+  private restartContinuation(soft: boolean): void {
+    this.beta = soft ? Math.min(this.beta, 2) : 1;
     this.loopBeta = 0;
     this.history = [];
   }
