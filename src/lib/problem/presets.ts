@@ -28,16 +28,16 @@ export function makePreset(id: PresetId): Preset {
         name: 'Bridge',
         blurb: 'Deck load across a span, pinned at both ends.',
         problem: {
-          width: 3,
+          width: 2.5,
           symmetric: true,
           supports: [
             { id: 's1', shape: 'segment', kind: 'fixed', a: { x: 0, y: 0 }, b: { x: 0, y: 0 } },
-            { id: 's2', shape: 'segment', kind: 'fixed', a: { x: 3, y: 0 }, b: { x: 3, y: 0 } },
+            { id: 's2', shape: 'segment', kind: 'fixed', a: { x: 2.5, y: 0 }, b: { x: 2.5, y: 0 } },
           ],
-          loads: [{ id: 'l1', at: { x: 1.5, y: 0.3 }, fx: 0, fy: -1, length: 3 }],
+          loads: [{ id: 'l1', at: { x: 1.25, y: 0.3 }, fx: 0, fy: -1, length: 2.5 }],
           regions: [],
         },
-        volfrac: 0.25,
+        volfrac: 0.2,
         rmin48: 1.8,
         projection: true,
       };

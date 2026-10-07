@@ -413,6 +413,17 @@ export class Optimizer {
     return { compliance: c, dc, dv, solve };
   }
 
+  /**
+   * OC move limit. With a sharp projection (β > 4) boundary elements otherwise flip by the full
+   * move limit every iteration while the compliance stays flat, so the limit shrinks as 4/β;
+   * without projection it is exactly `params.move` (0.2, as in the 88-line code).
+   */
+  effectiveMove(): number {
+    const p = this.params;
+    if (!this.usesProjection()) return p.move;
+    return p.move * Math.min(1, 4 / this.beta);
+  }
+
   /** One optimisation iteration: analyse, filter sensitivities, OC update, continuation. */
   step(): IterationResult {
     const t0 = now();
@@ -424,21 +435,12 @@ export class Optimizer {
     const { compliance, dc, dv, solve } = this.analyse();
     const target = p.volfrac * n;
     const volumeOf = (xn: Float64Array) => this.physicalVolume(xn);
+    const move = this.effectiveMove();
     let oc;
     if (p.ocMode === 'top88') {
-      oc = ocBisect88(this.x, dc, dv, p.move, volumeOf, target, this.xnew, this.design);
+      oc = ocBisect88(this.x, dc, dv, move, volumeOf, target, this.xnew, this.design);
     } else {
-      oc = ocIllinois(
-        this.x,
-        dc,
-        dv,
-        this.design,
-        p.move,
-        volumeOf,
-        target,
-        this.lambda,
-        this.xnew,
-      );
+      oc = ocIllinois(this.x, dc, dv, this.design, move, volumeOf, target, this.lambda, this.xnew);
     }
     this.lambda = oc.lambda;
     if (this.problem.symmetric) {

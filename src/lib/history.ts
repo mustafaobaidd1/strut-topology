@@ -28,6 +28,17 @@ export class History<T> {
     this.future = [];
   }
 
+  /**
+   * Ends a continuous edit (a drag): `from` becomes the undo step and `next` the present,
+   * whatever intermediate states were set with replace().
+   */
+  pushFrom(from: T, next: T): void {
+    this.past.push(from);
+    if (this.past.length > this.limit) this.past.shift();
+    this.present = next;
+    this.future = [];
+  }
+
   /** Replaces the present state without creating an undo step (e.g. during a drag). */
   replace(next: T): void {
     this.present = next;
