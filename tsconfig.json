@@ -17,5 +17,14 @@
     "noEmit": true,
     "types": ["vite/client", "node", "svelte"]
   },
-  "include": ["src", "tests", "e2e", "scripts", "vite.config.ts", "playwright.config.ts"]
+  "include": [
+    "src",
+    "tests",
+    "e2e",
+    "scripts",
+    "vite.config.ts",
+    "playwright.config.ts",
+    "validation",
+    "vitest.validate.config.ts"
+  ]
 }

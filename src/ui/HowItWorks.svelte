@@ -179,7 +179,7 @@
         </thead>
         <tbody>
           <tr>
-            <td>Patch test: uniform strain on a 8 × 4 mesh, all three solvers</td>
+            <td>Patch test: uniform strain on an 8 × 4 mesh, all three solvers</td>
             <td>exact linear field</td>
             <td>error below 10⁻¹³</td>
           </tr>
@@ -196,12 +196,12 @@
           <tr>
             <td>Compliance gradient (density filter, projection, passive elements)</td>
             <td>central finite differences</td>
-            <td>relative error about 10⁻⁸ (test bound 10⁻⁵)</td>
+            <td>max relative error 6 × 10⁻⁷ (test bound 10⁻⁵)</td>
           </tr>
           <tr>
             <td>Symmetric bridge solved without imposing symmetry</td>
             <td>mirror symmetry</td>
-            <td>asymmetry below 10⁻⁸ (direct solver)</td>
+            <td>max asymmetry 1.5 × 10⁻¹⁰ (direct), 1.1 × 10⁻⁷ (multigrid CG)</td>
           </tr>
           <tr>
             <td>88-line code, MBB 60 × 20, ft = 1, r<sub>min</sub> 2.4</td>
@@ -212,6 +212,11 @@
             <td>Same, density filter ft = 2</td>
             <td>c = 233.71</td>
             <td>233.71 after 144 iterations (MGCG gives the same)</td>
+          </tr>
+          <tr>
+            <td>Same code on 150 × 50, r<sub>min</sub> 6, ft = 1 and ft = 2</td>
+            <td>c = 219.52 and 235.73</td>
+            <td>219.52 (95 iterations) and 235.73 (362 iterations)</td>
           </tr>
           <tr>
             <td>Same, Heaviside variant ft = 3, r<sub>min</sub> 1.8</td>
@@ -285,6 +290,34 @@
         (end-loaded cantilever).
       </li>
     </ul>
+
+    <h3>Keyboard</h3>
+    <dl class="keys">
+      <dt><kbd>Space</kbd></dt>
+      <dd>run or pause</dd>
+      <dt><kbd>.</kbd> / <kbd>R</kbd></dt>
+      <dd>one iteration / reset to a uniform design</dd>
+      <dt><kbd>V</kbd> <kbd>L</kbd> <kbd>P</kbd> <kbd>O</kbd> <kbd>D</kbd> <kbd>E</kbd></dt>
+      <dd>move, load, support, void, solid, erase tools</dd>
+      <dt><kbd>1</kbd>–<kbd>4</kbd></dt>
+      <dd>density, stress, deformed and energy views</dd>
+      <dt><kbd>Ctrl</kbd> <kbd>Z</kbd> / <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>Z</kbd></dt>
+      <dd>undo / redo</dd>
+      <dt><kbd>Tab</kbd>, arrows, <kbd>Delete</kbd></dt>
+      <dd>
+        loads, supports and regions on the canvas are buttons: arrows move them (Shift for bigger
+        steps); on an arrow head, left/right rotate and up/down change the magnitude
+      </dd>
+    </dl>
+
+    <h3>Credits</h3>
+    <p class="credits">
+      Typeset in Archivo (Omnibus-Type) and JetBrains Mono (JetBrains), both under the SIL Open Font
+      License 1.1. Equations by KaTeX (MIT). Polygon triangulation for STL by earcut (Mapbox, ISC).
+      Stress colours from the cividis map (Nuñez, Anderton &amp; Renslow 2018), sampled from
+      Matplotlib's table. The method follows the references above; the code is original and MIT
+      licensed.
+    </p>
   </div>
 </dialog>
 
@@ -399,6 +432,35 @@
     font-weight: 700;
   }
   .refs li {
+    font-size: 13.5px;
+  }
+  .keys {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 6px 14px;
+    margin: 0;
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+  .keys dt {
+    white-space: nowrap;
+  }
+  .keys dd {
+    margin: 0;
+  }
+  kbd {
+    display: inline-block;
+    min-width: 1.6em;
+    padding: 0 5px;
+    border: 1px solid var(--hair-strong);
+    border-bottom-width: 2px;
+    border-radius: 3px;
+    background: var(--paper-raised);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    text-align: center;
+  }
+  .credits {
     font-size: 13.5px;
   }
 </style>

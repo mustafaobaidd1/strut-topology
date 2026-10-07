@@ -11,6 +11,8 @@ test('the first screen grows a design on its own: compliance falls as iterations
   const later = await compliance(page);
   expect(later).toBeLessThan(early);
   await expect(page.getByTestId('chart')).toHaveAttribute('aria-label', /Compliance went from/);
+  // The solver ran in its Web Worker (loaded from under the /strut-topology/ base path).
+  await expect(page.getByText('runs on the main thread')).toHaveCount(0);
 });
 
 test('picking a preset and running it lowers the compliance over iterations', async ({ page }) => {

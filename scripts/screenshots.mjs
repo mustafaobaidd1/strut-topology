@@ -27,8 +27,19 @@ try {
     });
     await page.goto(url);
     await page.waitForSelector('html[data-ready="true"]', { timeout: 30_000 });
-    // Give animations and simulations a moment to reach a representative frame.
-    await page.waitForTimeout(Number(process.env.SHOT_DELAY ?? 2500));
+    // The first screen optimises a bridge live; capture it once the design has converged.
+    await page
+      .waitForFunction(
+        () =>
+          /Converged|Stopped/.test(
+            document.querySelector('[data-testid="canvas-status"]')?.textContent ?? '',
+          ),
+        null,
+        { timeout: 90_000 },
+      )
+      .catch(() => console.warn(`  ${shot.file}: not converged in time, capturing anyway`));
+    // Let the last frame settle and the hint animation rest.
+    await page.waitForTimeout(Number(process.env.SHOT_DELAY ?? 900));
     await page.screenshot({ path: shot.file });
     await page.close();
     console.log(`saved ${shot.file}`);
