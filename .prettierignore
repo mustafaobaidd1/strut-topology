@@ -6,3 +6,4 @@ package-lock.json
 public
 docs/screenshots
 .qa
+docs/validation-results.md
