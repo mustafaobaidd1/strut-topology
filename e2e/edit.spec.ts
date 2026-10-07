@@ -8,6 +8,7 @@ async function centroid(page: Page): Promise<[number, number]> {
 }
 
 test('dragging the load re-optimises and changes the design', async ({ page }) => {
+  test.setTimeout(150_000);
   await openApp(page);
   await waitForIteration(page, 40);
   const before = await centroid(page);
@@ -29,6 +30,13 @@ test('dragging the load re-optimises and changes the design', async ({ page }) =
   await expect
     .poll(async () => Math.abs((await centroid(page))[1] - before[1]), { timeout: 20_000 })
     .toBeGreaterThan(1.5);
+  // The re-optimisation finishes on its own, through the whole beta continuation, without errors.
+  // Up to the 300-iteration limit, which can take a while when many tests share the CPU.
+  await expect(page.getByTestId('canvas-status')).toContainText(/Converged|Stopped/, {
+    timeout: 110_000,
+  });
+  await expect(page.getByText('The solver stopped')).toHaveCount(0);
+  expect(Number((await page.getByTestId('compliance').textContent())?.trim())).toBeGreaterThan(0);
 });
 
 test('keyboard: a focused load moves with the arrow keys', async ({ page }) => {

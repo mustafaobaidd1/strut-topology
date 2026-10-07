@@ -112,6 +112,29 @@ describe('optimality-criteria update', () => {
     expect(ill.evaluations).toBeLessThan(bis.evaluations);
   });
 
+  it('never produces NaN when the volume target is out of reach (λ under- or overflow)', () => {
+    const m = 10;
+    const xs = Float64Array.from({ length: m }, (_, i) => (i < 5 ? 0 : 0.3));
+    const dcs = new Float64Array(m).fill(-1);
+    const dvs = new Float64Array(m).fill(1);
+    const sumOf = (v: Float64Array) => v.reduce((s, a) => s + a, 0);
+    for (const tgt of [5, 0.01]) {
+      const out = new Float64Array(m);
+      const r = ocIllinois(xs, dcs, dvs, null, 0.025, sumOf, tgt, 1, out);
+      expect(Number.isFinite(r.volume)).toBe(true);
+      expect(r.lambda).toBeGreaterThan(0);
+      expect(Number.isFinite(r.lambda)).toBe(true);
+      for (let e = 0; e < m; e++) {
+        expect(Number.isFinite(out[e])).toBe(true);
+        expect(Math.abs(out[e] - xs[e])).toBeLessThanOrEqual(0.025 + 1e-15);
+      }
+    }
+    // Zero sensitivity and zero volume gradient (a fully projected element) stay put, not NaN.
+    const one = new Float64Array(1);
+    ocCandidate(Float64Array.of(0.4), Float64Array.of(0), Float64Array.of(0), null, 0.2, 1, one);
+    expect(one[0]).toBeCloseTo(0.2, 15);
+  });
+
   it('keeps non-design elements fixed', () => {
     const design = new Uint8Array(n).fill(1);
     design[3] = 0;

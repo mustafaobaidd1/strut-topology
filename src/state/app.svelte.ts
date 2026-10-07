@@ -132,6 +132,7 @@ class AppState {
   private history = new History<Problem>(this.problem);
   private sendQueued = false;
   private pendingEdit = false;
+  private inEditBurst = false;
   private slowStreak = 0;
   private toastId = 0;
   /** Current run session: frames from older runs are dropped. */
@@ -241,8 +242,10 @@ class AppState {
           it: s.iteration,
           c: s.compliance,
           change: s.change,
-          edit: this.pendingEdit,
+          // One marker per burst of edits (a drag sends many), at its first iteration.
+          edit: this.pendingEdit && !this.inEditBurst,
         };
+        this.inEditBurst = this.pendingEdit;
         this.pendingEdit = false;
         const next = this.series.length >= 600 ? this.series.slice(-599) : this.series.slice();
         next.push(point);
@@ -285,6 +288,14 @@ class AppState {
     };
     if (typeof requestAnimationFrame === 'function') requestAnimationFrame(flush);
     else flush();
+  }
+
+  /** Recovery after a solver error: a fresh engine with the current setup. */
+  restartEngine(): void {
+    this.engineError = null;
+    this.client?.restart();
+    if (this.referenceFt !== null) this.enterReference(this.referenceFt);
+    else this.initEngine(!this.reducedMotion);
   }
 
   // ---------------------------------------------------------------- presets & modes

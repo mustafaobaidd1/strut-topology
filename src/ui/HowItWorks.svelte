@@ -144,7 +144,7 @@
       exactly: by bisection in the reference mode (as in the paper), by a bracketed regula falsi
       (Illinois) on <span use:tex={'\\log\\lambda'}></span>, warm-started from the last value, in
       interactive mode. A run stops when no design variable moves by more than 0.01, or when the
-      compliance has changed by less than 0.01 % over 10 iterations, once
+      average compliance of the last 8 iterations is within 0.01 % of the 8 before, once
       <span use:tex={'\\beta'}></span> has reached its final value.
     </p>
 

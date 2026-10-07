@@ -39,6 +39,13 @@ export class EngineHost {
     private readonly schedule: Schedule,
   ) {}
 
+  /** Stops all further work (used when a host is replaced). */
+  dispose(): void {
+    this.state = 'idle';
+    this.opt = null;
+    this.ref = null;
+  }
+
   receive(msg: ToEngine): void {
     try {
       this.handle(msg);
@@ -156,7 +163,14 @@ export class EngineHost {
     this.schedule(() => {
       this.timer = false;
       if (this.state !== 'running' || this.hidden) return;
-      this.iterate(false);
+      try {
+        this.iterate(false);
+      } catch (err) {
+        this.state = 'paused';
+        const message = err instanceof Error ? err.message : String(err);
+        this.post({ type: 'error', message }, []);
+        return;
+      }
       this.kick();
     }, delay);
   }

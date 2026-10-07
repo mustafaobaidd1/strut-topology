@@ -37,8 +37,9 @@ export interface OptimizerParams {
   /** Converged when max |Δx| ≤ this (and β has reached βmax). */
   changeTol: number;
   /**
-   * Also stop when the compliance has changed by less than this fraction over the last
-   * 10 iterations (density-filtered runs often creep with change ≈ 0.01–0.02). 0 disables it,
+   * Also stop when the mean compliance of the last 8 iterations differs from that of the 8
+   * before by less than this fraction (density-filtered runs often creep with change ≈ 0.01–0.02,
+   * and sharp projections flicker at the boundary). 0 disables it,
    * as in the 88-line reference mode.
    */
   stallTol: number;
@@ -485,10 +486,18 @@ export class Optimizer {
     const beta = this.beta;
     this.history.push(compliance);
     const h = this.history;
-    const stalled =
-      p.stallTol > 0 &&
-      h.length > 10 &&
-      Math.abs(h[h.length - 11] - compliance) <= p.stallTol * Math.abs(compliance);
+    // Compare the mean compliance of the last two 8-iteration windows: averaging makes the rule
+    // robust to the small flicker of boundary elements under a sharp projection.
+    let stalled = false;
+    if (p.stallTol > 0 && h.length >= 16) {
+      let a = 0;
+      let b = 0;
+      for (let k = 0; k < 8; k++) {
+        a += h[h.length - 16 + k];
+        b += h[h.length - 8 + k];
+      }
+      stalled = Math.abs(b - a) <= p.stallTol * Math.abs(b);
+    }
     const settled = change <= p.changeTol || stalled;
     const betaDone = !projecting || this.beta >= p.betaMax;
     let converged = settled && betaDone;

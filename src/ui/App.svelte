@@ -245,7 +245,7 @@
         <p class="notice error" role="alert">
           <Icon name="warning" size={16} />
           <span>The solver stopped: {app.engineError}</span>
-          <button type="button" onclick={() => app.reset()}>Reset the design</button>
+          <button type="button" onclick={() => app.restartEngine()}>Restart the solver</button>
         </p>
       {/if}
       {#if app.meshWarning}

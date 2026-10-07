@@ -33,9 +33,12 @@ export function ocCandidate(
       continue;
     }
     const xe = x[e];
-    // −dc can only be negative through round-off; clamp so sqrt stays real.
-    const b = Math.sqrt(Math.max(0, -dc[e]) / dv[e] / lambda);
-    let v = xe * b;
+    // −dc can only be negative through round-off; clamp so sqrt stays real. Guard the
+    // degenerate cases explicitly: an element at 0 stays at 0 (as in the 88-line code), and
+    // 0 · ∞ or 0 / 0 must never turn into NaN when λ under- or overflows.
+    const ratio = dv[e] > 0 ? Math.max(0, -dc[e]) / dv[e] : 0;
+    let v = xe > 0 && ratio > 0 ? xe * Math.sqrt(ratio / lambda) : 0;
+    if (Number.isNaN(v)) v = xe;
     if (v > xe + move) v = xe + move;
     if (v > 1) v = 1;
     if (v < xe - move) v = xe - move;
@@ -92,8 +95,10 @@ export function ocIllinois(
   volumeTol = 1e-7 * x.length,
 ): OCResult {
   let evaluations = 0;
+  // λ = e^t is kept within [e^-200, e^200]: far beyond any useful multiplier, never 0 or ∞.
+  const T = 200;
   const g = (t: number): number => {
-    ocCandidate(x, dc, dv, design, move, Math.exp(t), xnew);
+    ocCandidate(x, dc, dv, design, move, Math.exp(Math.max(-T, Math.min(T, t))), xnew);
     evaluations++;
     return volumeOf(xnew) - target; // decreasing in t
   };
@@ -104,7 +109,12 @@ export function ocIllinois(
   let step = g0 > 0 ? 1 : -1;
   let t1 = t0 + step;
   let g1 = g(t1);
-  while (Math.sign(g1) === Math.sign(g0) && Math.abs(g1) > volumeTol && evaluations < 80) {
+  while (
+    Math.sign(g1) === Math.sign(g0) &&
+    Math.abs(g1) > volumeTol &&
+    Math.abs(t1) < T &&
+    evaluations < 80
+  ) {
     t0 = t1;
     g0 = g1;
     step *= 2;
@@ -112,8 +122,9 @@ export function ocIllinois(
     g1 = g(t1);
   }
   if (Math.abs(g1) <= volumeTol || Math.sign(g1) === Math.sign(g0)) {
-    // Either converged or the target is unreachable within the move limits (bound active).
-    return { lambda: Math.exp(t1), volume: g1 + target, evaluations };
+    // Either converged or the target is unreachable within the move limits (bound active):
+    // the candidate already in `xnew` is the closest the move limits allow.
+    return { lambda: Math.exp(Math.max(-T, Math.min(T, t1))), volume: g1 + target, evaluations };
   }
   let ta = t0;
   let ga = g0;

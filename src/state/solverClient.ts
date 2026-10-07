@@ -19,15 +19,26 @@ export class SolverClient {
     private readonly onMessage: (msg: FromEngine) => void,
     private readonly onFallback: (reason: string) => void,
   ) {
+    this.spawn();
+  }
+
+  private spawn(): void {
+    this.ready = false;
     try {
-      this.worker = new Worker(new URL('../worker/solver.worker.ts', import.meta.url), {
+      const worker = new Worker(new URL('../worker/solver.worker.ts', import.meta.url), {
         type: 'module',
         name: 'strut-solver',
       });
-      this.worker.onmessage = (e: MessageEvent<FromEngine>) => this.receive(e.data);
-      this.worker.onerror = (e) => {
+      this.worker = worker;
+      worker.onmessage = (e: MessageEvent<FromEngine>) => this.receive(e.data);
+      worker.onerror = (e) => {
         e.preventDefault();
-        this.toFallback('The background solver failed to start');
+        if (!this.ready) {
+          this.toFallback('The background solver failed to start');
+        } else {
+          // A crash after start-up: report it; the app offers a restart.
+          this.onMessage({ type: 'error', message: e.message || 'the background solver crashed' });
+        }
       };
       this.timeout = setTimeout(() => {
         if (!this.ready) this.toFallback('The background solver did not respond');
@@ -35,6 +46,22 @@ export class SolverClient {
     } catch {
       queueMicrotask(() => this.toFallback('Background workers are not available'));
     }
+  }
+
+  /** Replaces a crashed engine with a fresh one (the caller re-sends its setup). */
+  restart(): void {
+    if (this.fallback) {
+      this.host?.dispose();
+      this.host = new EngineHost(
+        (msg) => this.onMessage(msg),
+        (fn, ms) => setTimeout(fn, Math.max(ms, 4)),
+      );
+      return;
+    }
+    this.worker?.terminate();
+    this.worker = null;
+    if (this.timeout) clearTimeout(this.timeout);
+    this.spawn();
   }
 
   private receive(msg: FromEngine): void {
