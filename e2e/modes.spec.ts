@@ -43,3 +43,15 @@ test('how it works opens with typeset equations and closes with Escape', async (
   await page.keyboard.press('Escape');
   await expect(dialog).toHaveCount(0);
 });
+
+test('if the worker cannot start, the solver falls back to the main thread', async ({ page }) => {
+  await page.route('**/*solver.worker*', (route) => route.abort());
+  await page.goto('./');
+  await expect(page.locator('html')).toHaveAttribute('data-ready', 'true', { timeout: 20_000 });
+  await expect(page.getByText('runs on the main thread')).toBeVisible({ timeout: 15_000 });
+  await expect
+    .poll(async () => Number(await page.getByTestId('viewport').getAttribute('data-iteration')), {
+      timeout: 30_000,
+    })
+    .toBeGreaterThan(5);
+});

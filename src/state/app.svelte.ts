@@ -15,6 +15,7 @@ import {
 import { makePreset, type PresetId } from '../lib/problem/presets';
 import { meshFor, resolveProblem } from '../lib/problem/resolve';
 import { validateProblem, type Issue, type Warning } from '../lib/problem/validate';
+import { meshWarning, SLOW_ITERATION_MS } from '../lib/meshBudget';
 import { FrameStore } from './frames';
 import { SolverClient } from './solverClient';
 
@@ -133,6 +134,8 @@ class AppState {
   private pendingEdit = false;
   private slowStreak = 0;
   private toastId = 0;
+  /** Current run session: frames from older runs are dropped. */
+  private session = 0;
   private beforeReference: {
     problem: Problem;
     presetId: PresetId | 'custom';
@@ -201,6 +204,7 @@ class AppState {
       view: this.view,
       pacing: this.pacing(),
       run,
+      session: ++this.session,
     });
   }
 
@@ -212,11 +216,13 @@ class AppState {
       return;
     }
     if (msg.type === 'log') {
+      if (msg.session !== this.session) return;
       this.referenceLog = [...this.referenceLog, msg.line];
       if (msg.final) this.referenceDone = true;
       return;
     }
     const f = msg.frame;
+    if (f.session !== this.session) return;
     this.engineError = null;
     this.frames.accept(f, performance.now());
     if (this.reducedMotion) this.frames.settle();
@@ -248,7 +254,7 @@ class AppState {
 
   private checkSpeed(s: FrameStats): void {
     if (this.referenceFt !== null || s.runIteration === 0 || this.engine !== 'running') return;
-    if (s.ms > 450 && this.params.nely >= 64) this.slowStreak++;
+    if (s.ms > SLOW_ITERATION_MS && this.params.nely >= 64) this.slowStreak++;
     else this.slowStreak = 0;
     if (this.slowStreak >= 3 && !this.meshWarning) {
       this.meshWarning = `This mesh is heavy for this device: about ${(s.ms / 1000).toFixed(1)} s per iteration.`;
@@ -290,7 +296,7 @@ class AppState {
     this.setProblemCommit(pr.problem, false);
     this.params.volfrac = pr.volfrac;
     this.params.projection = pr.projection;
-    this.params.rmin = round1((pr.rmin48 * this.params.nely) / 48);
+    this.params.rmin = round1(Math.max(1.5, (pr.rmin48 * this.params.nely) / 48));
     this.selection = null;
     this.client?.post({ type: 'params', params: this.optimizerParams(), resume: false });
     this.initEngine(!this.reducedMotion);
@@ -320,7 +326,7 @@ class AppState {
     this.series = [];
     this.stopReason = null;
     this.issue = null;
-    this.client?.post({ type: 'reference', ft, pacing: this.pacing() });
+    this.client?.post({ type: 'reference', ft, pacing: this.pacing(), session: ++this.session });
   }
 
   leaveReference(restart = true): void {
@@ -467,18 +473,22 @@ class AppState {
 
   setMesh(nely: number): void {
     if (!this.editable || nely === this.params.nely) return;
+    const before = meshFor(this.problem.width, this.params.nely);
+    const after = meshFor(this.problem.width, nely);
     // Keep the filter radius at the same physical size.
     this.params.rmin = round1(
       Math.max(1.2, Math.min(8, (this.params.rmin * nely) / this.params.nely)),
     );
     this.params.nely = nely;
-    this.meshWarning = null;
     this.slowStreak = 0;
     const cores = typeof navigator !== 'undefined' ? navigator.hardwareConcurrency || 4 : 4;
-    if (nely >= 96 && cores <= 4) {
-      this.meshWarning =
-        'This mesh may be too fine for this device; iterations could take seconds.';
-    }
+    // Predicted from the iteration time measured on the current mesh.
+    this.meshWarning = meshWarning(
+      this.stats?.ms ?? NaN,
+      before.nelx * before.nely,
+      after.nelx * after.nely,
+      cores,
+    );
     this.client?.post({ type: 'params', params: this.optimizerParams(), resume: false });
     this.queueSend();
   }
@@ -504,12 +514,16 @@ class AppState {
       this.referenceLog = [];
       this.referenceDone = false;
       this.series = [];
-      this.client?.post({ type: 'reset', run: true });
+      this.client?.post({ type: 'reset', run: true, session: ++this.session });
       return;
     }
     this.series = [];
     this.stopReason = null;
-    this.client?.post({ type: 'reset', run: !this.reducedMotion && !this.issue });
+    this.client?.post({
+      type: 'reset',
+      run: !this.reducedMotion && !this.issue,
+      session: ++this.session,
+    });
   }
 
   setView(v: ViewKind): void {

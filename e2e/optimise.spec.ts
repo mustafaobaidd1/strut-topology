@@ -41,8 +41,12 @@ test('pause stops the iterations and step advances exactly one', async ({ page }
 test('switching views shows the stress legend', async ({ page }) => {
   await openApp(page);
   await waitForIteration(page, 5);
+  const legend = page.getByTestId('legend');
   await page.getByTestId('view-stress').click();
-  await expect(page.getByText('von Mises stress')).toBeVisible();
+  await expect(legend).toContainText(/stress/i);
   await page.getByTestId('view-deformed').click();
-  await expect(page.getByText('displacements exaggerated')).toBeVisible();
+  await expect(legend).toContainText('Deformed');
+  await expect(legend).toContainText('displacements ×');
+  await page.getByTestId('view-energy').click();
+  await expect(legend).toContainText(/energy/i);
 });

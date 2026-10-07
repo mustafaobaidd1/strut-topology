@@ -30,6 +30,9 @@ export class EngineHost {
   private seq = 0;
   private lastMs = 0;
   private maxIter = 300;
+  private session = 0;
+  /** Statistics of the last iteration, reused by frames that are not iterations. */
+  private lastStats: FrameStats | null = null;
 
   constructor(
     private readonly post: Post,
@@ -48,6 +51,8 @@ export class EngineHost {
   private handle(msg: ToEngine): void {
     switch (msg.type) {
       case 'init': {
+        this.session = msg.session;
+        this.lastStats = null;
         this.ref = null;
         this.opt = new Optimizer(msg.problem, msg.params);
         this.maxIter = this.opt.params.maxIter;
@@ -90,6 +95,8 @@ export class EngineHost {
         this.iterate(true);
         break;
       case 'reset': {
+        this.session = msg.session;
+        this.lastStats = null;
         if (this.ref) {
           const r = this.ref;
           this.ref = new Top88(r.nelx, r.nely, r.volfrac, r.penal, r.rmin, r.ft);
@@ -103,12 +110,18 @@ export class EngineHost {
       }
       case 'view':
         this.view = msg.view;
-        if (this.state !== 'running') this.sendExact(null, false);
+        if (this.state !== 'running') {
+          // The last analysis already belongs to the displayed design: only the field changes.
+          const stats = this.lastStats ?? this.currentStats();
+          if (stats) this.sendFrame(stats, false, null, true);
+        }
         break;
       case 'pacing':
         this.pacing = msg.pacing;
         break;
       case 'reference': {
+        this.session = msg.session;
+        this.lastStats = null;
         this.opt = null;
         const rmin = msg.ft === 3 ? 1.8 : 2.4; // 0.04·nelx, or 0.03·nelx for the Heaviside variant
         this.ref = new Top88(60, 20, 0.5, 3, rmin, msg.ft);
@@ -165,7 +178,8 @@ export class EngineHost {
     if (stop || single) {
       this.sendExact(stop, true, r);
     } else {
-      this.sendFrame(this.statsOf(r), this.pacing.animate, null, false);
+      this.lastStats = this.statsOf(r);
+      this.sendFrame(this.lastStats, this.pacing.animate, null, false);
     }
   }
 
@@ -176,7 +190,7 @@ export class EngineHost {
     const line = ref.step();
     this.lastMs = performance.now() - t0;
     const done = ref.finished;
-    this.post({ type: 'log', line: Top88.format(line), final: done }, []);
+    this.post({ type: 'log', line: Top88.format(line), final: done, session: this.session }, []);
     if (done) this.state = 'converged';
     else if (single) this.state = 'paused';
     const stats: FrameStats = {
@@ -191,6 +205,7 @@ export class EngineHost {
       cgConverged: true,
       ms: this.lastMs,
     };
+    this.lastStats = stats;
     this.sendFrame(stats, this.pacing.animate || done || single, done ? 'reference' : null, false);
   }
 
@@ -216,19 +231,38 @@ export class EngineHost {
     const opt = this.opt;
     if (!opt) return;
     const a = opt.analyse();
+    const prev = last ? this.statsOf(last) : this.lastStats;
     const stats: FrameStats = {
       iteration: opt.iteration,
       runIteration: opt.runIteration,
       compliance: a.compliance,
       volume: opt.volume,
-      change: last?.change ?? NaN,
+      change: prev?.change ?? NaN,
       beta: opt.beta,
-      grayness: last?.grayness ?? grayness(opt.xPhys),
-      cgIterations: a.solve.iterations,
+      grayness: grayness(opt.xPhys),
+      cgIterations: prev?.cgIterations ?? a.solve.iterations,
       cgConverged: a.solve.converged,
-      ms: last?.ms ?? 0,
+      ms: prev?.ms ?? 0,
     };
+    this.lastStats = stats;
     this.sendFrame(stats, withDensity, stop, true);
+  }
+
+  private currentStats(): FrameStats | null {
+    const src = this.ref ?? this.opt;
+    if (!src) return null;
+    return {
+      iteration: this.ref ? this.ref.loop : (this.opt as Optimizer).iteration,
+      runIteration: this.ref ? this.ref.loop : (this.opt as Optimizer).runIteration,
+      compliance: NaN,
+      volume: mean(src.xPhys),
+      change: NaN,
+      beta: this.ref ? this.ref.beta : (this.opt as Optimizer).beta,
+      grayness: grayness(src.xPhys),
+      cgIterations: 0,
+      cgConverged: true,
+      ms: 0,
+    };
   }
 
   private statsOf(r: IterationResult): FrameStats {
@@ -279,6 +313,7 @@ export class EngineHost {
     }
     const frame: Frame = {
       seq: ++this.seq,
+      session: this.session,
       nelx: grid.nelx,
       nely: grid.nely,
       density,

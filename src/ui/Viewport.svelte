@@ -689,116 +689,125 @@
   );
 </script>
 
-<div
-  class="viewport"
-  class:compact
-  class:drawing={app.tool !== 'select'}
-  class:dragging-load={draggingLoad}
-  bind:this={container}
-  bind:clientWidth={cw}
-  bind:clientHeight={ch}
-  role="application"
-  tabindex="-1"
-  aria-label="Design canvas"
-  aria-describedby="canvas-help"
-  onpointerdown={onPointerDown}
-  onpointermove={onPointerMove}
-  onpointerup={onPointerUp}
-  onpointercancel={onPointerUp}
-  onpointerleave={() => (pointer = null)}
-  data-testid="viewport"
-  data-domain={`${t.ox},${t.oy},${t.s}`}
-  data-iteration={app.stats?.iteration ?? 0}
-  data-centroid={centroid}
->
-  {#key rendererKind}
-    <canvas class="layer" bind:this={fieldCanvas} aria-hidden="true"></canvas>
-  {/key}
-  <canvas class="layer" bind:this={overlayCanvas} aria-hidden="true"></canvas>
+<div class="frame" class:compact>
+  <div
+    class="viewport"
+    class:compact
+    class:drawing={app.tool !== 'select'}
+    class:dragging-load={draggingLoad}
+    bind:this={container}
+    bind:clientWidth={cw}
+    bind:clientHeight={ch}
+    role="application"
+    tabindex="-1"
+    aria-label="Design canvas"
+    aria-describedby="canvas-help"
+    onpointerdown={onPointerDown}
+    onpointermove={onPointerMove}
+    onpointerup={onPointerUp}
+    onpointercancel={onPointerUp}
+    onpointerleave={() => (pointer = null)}
+    data-testid="viewport"
+    data-domain={`${t.ox},${t.oy},${t.s}`}
+    data-iteration={app.stats?.iteration ?? 0}
+    data-centroid={centroid}
+  >
+    {#key rendererKind}
+      <canvas class="layer" bind:this={fieldCanvas} aria-hidden="true"></canvas>
+    {/key}
+    <canvas class="layer" bind:this={overlayCanvas} aria-hidden="true"></canvas>
 
-  {#if !hasFrame}
-    <div
-      class="skeleton"
-      style:left="{t.ox}px"
-      style:top="{t.oy - t.s}px"
-      style:width="{app.problem.width * t.s}px"
-      style:height="{t.s}px"
-      aria-hidden="true"
-    ></div>
-  {/if}
+    {#if !hasFrame}
+      <div
+        class="skeleton"
+        style:left="{t.ox}px"
+        style:top="{t.oy - t.s}px"
+        style:width="{app.problem.width * t.s}px"
+        style:height="{t.s}px"
+        aria-hidden="true"
+      ></div>
+    {/if}
 
-  {#each handles as h (h.key)}
-    <button
-      type="button"
-      class="handle {h.entity} part-{h.part}"
-      class:selected={app.selection === h.id}
-      style:left="{h.x}px"
-      style:top="{h.y}px"
-      aria-label={h.label}
-      disabled={!app.editable}
-      onpointerdown={(e) => startHandleDrag(e, h)}
-      onkeydown={(e) => onHandleKey(e, h)}
-      onfocus={() => (app.selection = h.id)}
-      data-testid="handle-{h.entity}-{h.part}"
-    ></button>
-  {/each}
+    {#each handles as h (h.key)}
+      <button
+        type="button"
+        class="handle {h.entity} part-{h.part}"
+        class:selected={app.selection === h.id}
+        style:left="{h.x}px"
+        style:top="{h.y}px"
+        aria-label={h.label}
+        disabled={!app.editable}
+        onpointerdown={(e) => startHandleDrag(e, h)}
+        onkeydown={(e) => onHandleKey(e, h)}
+        onfocus={() => (app.selection = h.id)}
+        data-testid="handle-{h.entity}-{h.part}"
+      ></button>
+    {/each}
 
-  <div class="status caps" class:running={app.engine === 'running'} data-testid="canvas-status">
-    <span class="dot" aria-hidden="true"></span>{statusText}
-  </div>
-
-  {#if hintHandle && !app.issue}
-    <div class="hint" style:left="{hintHandle.x}px" style:top="{hintHandle.y}px" aria-hidden="true">
-      <span class="hint-line"></span>
-      <span class="hint-label">Drag the load</span>
-    </div>
-  {/if}
-
-  {#if app.issue}
-    <div class="issue" role="alert" data-testid="issue">
-      <p class="issue-title">{app.issue.title}</p>
-      <p class="issue-detail">{app.issue.detail}</p>
-      <div class="issue-actions">
-        {#if app.issue.code === 'no-supports' || app.issue.code === 'mechanism'}
-          <button type="button" class="btn primary" onclick={() => (app.tool = 'support')}
-            >Place a support</button
-          >
-        {:else if app.issue.code === 'no-loads' || app.issue.code === 'loads-on-supports'}
-          <button type="button" class="btn primary" onclick={() => (app.tool = 'load')}
-            >Place a load</button
-          >
-        {:else if app.issue.code === 'too-much-solid'}
-          <button
-            type="button"
-            class="btn primary"
-            onclick={() => app.setParam('volfrac', Math.min(0.9, app.params.volfrac + 0.1))}
-            >Raise the volume fraction</button
-          >
-        {/if}
-        {#if app.canUndo}
-          <button type="button" class="btn" onclick={() => app.undo()}>Undo last edit</button>
-        {/if}
-      </div>
-    </div>
-  {/if}
-
-  {#if showReducedCta}
-    <div class="reduced">
-      <button type="button" class="btn primary big" onclick={() => app.run()}
-        >Optimise this design</button
+    {#if hintHandle && !app.issue}
+      <div
+        class="hint"
+        class:flip-x={hintHandle.x > cw - 200}
+        class:flip-y={hintHandle.y < 70}
+        style:left="{hintHandle.x}px"
+        style:top="{hintHandle.y}px"
+        aria-hidden="true"
       >
-      <p>
-        Animation is off because your system asks for reduced motion. The result appears when the
-        run finishes.
-      </p>
-    </div>
-  {:else if app.reducedMotion && app.engine === 'running'}
-    <div class="reduced quiet" aria-hidden="true">
-      <p class="mono">Optimising · iteration {app.stats?.runIteration ?? 0}</p>
-    </div>
-  {/if}
+        <span class="hint-line"></span>
+        <span class="hint-label">Drag the load</span>
+      </div>
+    {/if}
 
-  <Legend {compact} />
+    {#if app.issue}
+      <div class="issue" role="alert" data-testid="issue">
+        <p class="issue-title">{app.issue.title}</p>
+        <p class="issue-detail">{app.issue.detail}</p>
+        <div class="issue-actions">
+          {#if app.issue.code === 'no-supports' || app.issue.code === 'mechanism'}
+            <button type="button" class="btn primary" onclick={() => (app.tool = 'support')}
+              >Place a support</button
+            >
+          {:else if app.issue.code === 'no-loads' || app.issue.code === 'loads-on-supports'}
+            <button type="button" class="btn primary" onclick={() => (app.tool = 'load')}
+              >Place a load</button
+            >
+          {:else if app.issue.code === 'too-much-solid'}
+            <button
+              type="button"
+              class="btn primary"
+              onclick={() => app.setParam('volfrac', Math.min(0.9, app.params.volfrac + 0.1))}
+              >Raise the volume fraction</button
+            >
+          {/if}
+          {#if app.canUndo}
+            <button type="button" class="btn" onclick={() => app.undo()}>Undo last edit</button>
+          {/if}
+        </div>
+      </div>
+    {/if}
+
+    {#if showReducedCta}
+      <div class="reduced">
+        <button type="button" class="btn primary big" onclick={() => app.run()}
+          >Optimise this design</button
+        >
+        <p>
+          Animation is off because your system asks for reduced motion. The result appears when the
+          run finishes.
+        </p>
+      </div>
+    {:else if app.reducedMotion && app.engine === 'running'}
+      <div class="reduced quiet" aria-hidden="true">
+        <p class="mono">Optimising · iteration {app.stats?.runIteration ?? 0}</p>
+      </div>
+    {/if}
+  </div>
+  <div class="foot">
+    <div class="status caps" class:running={app.engine === 'running'} data-testid="canvas-status">
+      <span class="dot" aria-hidden="true"></span>{statusText}
+    </div>
+    <Legend {compact} />
+  </div>
 </div>
 <p id="canvas-help" class="visually-hidden">
   Loads, supports and regions on the canvas are buttons: tab to one, then use the arrow keys to move
@@ -808,11 +817,33 @@
 </p>
 
 <style>
-  .viewport {
-    position: relative;
+  .frame {
+    display: flex;
+    flex-direction: column;
     width: 100%;
     height: 100%;
-    min-height: 220px;
+  }
+  .foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 40px;
+    padding: 5px 12px;
+    border-top: 1px solid var(--hair);
+    background: var(--paper);
+    overflow: hidden;
+  }
+  .frame.compact .foot {
+    min-height: 36px;
+    padding: 4px 10px;
+    gap: 8px;
+  }
+  .viewport {
+    position: relative;
+    flex: 1;
+    width: 100%;
+    min-height: 200px;
     overflow: hidden;
     touch-action: none;
     user-select: none;
@@ -899,11 +930,16 @@
     margin: -11px 0 0 -11px;
     border: 1.5px dashed rgba(21, 21, 21, 0.45);
     background: rgba(242, 241, 237, 0.7);
+    opacity: 0;
+  }
+  .handle.part-move.region:hover,
+  .handle.part-move.region:focus-visible,
+  .handle.part-move.region.selected,
+  .viewport:not(.drawing) .handle.part-move.region:active {
+    opacity: 1;
   }
   .status {
-    position: absolute;
-    left: 12px;
-    top: 10px;
+    flex: none;
     display: flex;
     align-items: center;
     gap: 7px;
@@ -959,6 +995,24 @@
     font-stretch: 85%;
     letter-spacing: 0.02em;
     animation: nudge 2.4s ease-in-out infinite;
+  }
+  .hint.flip-x .hint-line {
+    left: -10px;
+    transform: rotate(-145deg);
+  }
+  .hint.flip-x .hint-label {
+    left: auto;
+    right: 38px;
+  }
+  .hint.flip-y .hint-line {
+    top: 10px;
+    transform: rotate(35deg);
+  }
+  .hint.flip-x.flip-y .hint-line {
+    transform: rotate(145deg);
+  }
+  .hint.flip-y .hint-label {
+    top: 18px;
   }
   @keyframes nudge {
     0%,

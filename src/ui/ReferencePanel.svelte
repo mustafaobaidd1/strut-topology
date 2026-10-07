@@ -147,8 +147,8 @@
     background: var(--ink);
     color: #e6e5df;
     border-radius: var(--r-sm);
-    font-size: 11px;
-    line-height: 1.5;
+    font-size: 10px;
+    line-height: 1.55;
     white-space: pre;
   }
   .leave {

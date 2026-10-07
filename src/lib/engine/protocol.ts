@@ -22,16 +22,18 @@ export type ToEngine =
       view: ViewKind;
       pacing: Pacing;
       run: boolean;
+      /** Run session; frames of older sessions are ignored by the UI. */
+      session: number;
     }
   | { type: 'problem'; problem: GridProblem; resume: boolean }
   | { type: 'params'; params: Partial<OptimizerParams>; resume: boolean }
   | { type: 'run' }
   | { type: 'pause' }
   | { type: 'step' }
-  | { type: 'reset'; run: boolean }
+  | { type: 'reset'; run: boolean; session: number }
   | { type: 'view'; view: ViewKind }
   | { type: 'pacing'; pacing: Pacing }
-  | { type: 'reference'; ft: FilterType88; pacing: Pacing }
+  | { type: 'reference'; ft: FilterType88; pacing: Pacing; session: number }
   | { type: 'visibility'; hidden: boolean };
 
 export interface FrameStats {
@@ -49,6 +51,7 @@ export interface FrameStats {
 
 export interface Frame {
   seq: number;
+  session: number;
   nelx: number;
   nely: number;
   /** Physical densities x̄ (element field), or null when unchanged / not animating. */
@@ -69,5 +72,5 @@ export interface Frame {
 export type FromEngine =
   | { type: 'ready' }
   | { type: 'frame'; frame: Frame }
-  | { type: 'log'; line: string; final: boolean }
+  | { type: 'log'; line: string; final: boolean; session: number }
   | { type: 'error'; message: string };

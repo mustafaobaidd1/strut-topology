@@ -196,11 +196,28 @@ export class Optimizer {
     target = Math.min(1, Math.max(0, target));
     let x0 = target;
     if (this.usesProjection()) x0 = inverseProjectTanh(target, 1, this.params.eta);
-    for (let e = 0; e < n; e++) this.x[e] = passive[e] === 1 ? 1 : passive[e] === -1 ? 0 : x0;
+    const fill = (v: number) => {
+      for (let e = 0; e < n; e++) this.x[e] = passive[e] === 1 ? 1 : passive[e] === -1 ? 0 : v;
+    };
+    this.beta = 1;
+    fill(x0);
+    // Near passive regions the filter (and projection) shift the physical volume; adjust the
+    // uniform start so the very first frame already shows the requested volume fraction.
+    const want = this.params.volfrac * n;
+    if (free > 0 && Math.abs(this.physicalVolume(this.x) - want) > 1e-9 * n) {
+      let lo = 0;
+      let hi = 1;
+      for (let it = 0; it < 50; it++) {
+        const mid = 0.5 * (lo + hi);
+        fill(mid);
+        if (this.physicalVolume(this.x) < want) lo = mid;
+        else hi = mid;
+      }
+      fill(0.5 * (lo + hi));
+    }
     this.u.fill(0);
     this.iteration = 0;
     this.runIteration = 0;
-    this.beta = 1;
     this.loopBeta = 0;
     this.lambda = 1;
     this.history = [];

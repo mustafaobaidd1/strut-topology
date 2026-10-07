@@ -7,7 +7,15 @@ import svelteConfig from './svelte.config.js';
 
 export default defineConfig(
   {
-    ignores: ['dist', 'coverage', 'playwright-report', 'test-results', 'node_modules', 'public'],
+    ignores: [
+      'dist',
+      'coverage',
+      'playwright-report',
+      'test-results',
+      'node_modules',
+      'public',
+      '.qa',
+    ],
   },
   js.configs.recommended,
   tseslint.configs.recommended,

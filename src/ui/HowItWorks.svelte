@@ -66,8 +66,8 @@
       — so the problem is to minimise compliance under a volume budget:
     </p>
     <div
-      use:tex={String.raw`\min_{\mathbf x}\; c = \mathbf F^{\mathsf T}\mathbf u = \sum_e E_e(\bar x_e)\,\mathbf u_e^{\mathsf T}\mathbf k_0\,\mathbf u_e
-      \quad\text{s.t.}\quad \mathbf K(\bar{\mathbf x})\,\mathbf u = \mathbf F,\quad \frac{1}{N}\sum_e \bar x_e \le f,\quad 0\le x_e\le 1`}
+      use:tex={String.raw`\begin{aligned}\min_{\mathbf x}\;& c = \mathbf F^{\mathsf T}\mathbf u = \sum_e E_e(\bar x_e)\,\mathbf u_e^{\mathsf T}\mathbf k_0\,\mathbf u_e\\
+      \text{subject to}\;& \mathbf K(\bar{\mathbf x})\,\mathbf u = \mathbf F,\qquad \tfrac{1}{N}\textstyle\sum_e \bar x_e \le f,\qquad 0\le x_e\le 1\end{aligned}`}
     ></div>
 
     <h3>Elasticity and Q4 elements</h3>
@@ -130,7 +130,12 @@
     ></div>
 
     <h3>Optimality-criteria update</h3>
-    <p>Each iteration moves every design variable by at most <span use:tex={'m = 0.2'}></span>:</p>
+    <p>
+      Each iteration moves every design variable by at most <span use:tex={'m = 0.2'}></span>
+      (shrunk to <span use:tex={String.raw`0.2\cdot 4/\beta`}></span> once the projection is sharper
+      than <span use:tex={String.raw`\beta = 4`}></span>, where boundary elements would otherwise
+      flip back and forth):
+    </p>
     <div
       use:tex={String.raw`x_e^{\text{new}} = \operatorname{clamp}\Bigl(x_e\sqrt{B_e},\; \max(0, x_e - m),\; \min(1, x_e + m)\Bigr),\qquad B_e = \frac{-\partial c/\partial x_e}{\lambda\,\partial V/\partial x_e}`}
     ></div>

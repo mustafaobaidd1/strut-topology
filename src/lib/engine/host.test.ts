@@ -32,6 +32,7 @@ describe('engine host', () => {
       view: 'density',
       pacing: { minIntervalMs: 0, animate: true },
       run: true,
+      session: 1,
     });
     const first = h.frames()[0];
     expect(first.exact).toBe(true);
@@ -52,6 +53,7 @@ describe('engine host', () => {
       view: 'density',
       pacing: { minIntervalMs: 0, animate: true },
       run: true,
+      session: 1,
     });
     h.pump(3);
     h.host.receive({ type: 'pause' });
@@ -77,6 +79,7 @@ describe('engine host', () => {
       view: 'stress',
       pacing: { minIntervalMs: 0, animate: true },
       run: false,
+      session: 1,
     });
     const f = h.frames()[0];
     expect(f.field?.length).toBe(f.nelx * f.nely);
@@ -95,6 +98,7 @@ describe('engine host', () => {
       view: 'density',
       pacing: { minIntervalMs: 0, animate: false },
       run: true,
+      session: 1,
     });
     h.pump(50);
     const last = h.frames().at(-1)!;
@@ -105,7 +109,12 @@ describe('engine host', () => {
 
   it('reference mode prints the 88-line log and stops on its own rule', () => {
     const h = harness();
-    h.host.receive({ type: 'reference', ft: 1, pacing: { minIntervalMs: 0, animate: false } });
+    h.host.receive({
+      type: 'reference',
+      ft: 1,
+      pacing: { minIntervalMs: 0, animate: false },
+      session: 2,
+    });
     h.pump(400);
     const logs = h.out.filter((m) => m.type === 'log') as { line: string; final: boolean }[];
     expect(logs[0].line).toBe(' It.:    1 Obj.:  1007.0221 Vol.:  0.500 ch.:  0.200');

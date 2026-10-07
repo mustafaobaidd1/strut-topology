@@ -114,8 +114,8 @@ export function makePreset(id: PresetId): Preset {
             { id: 'r1', shape: 'circle', kind: 'solid', centre: { x: 0.4, y: 0.5 }, radius: 0.12 },
           ],
         },
-        volfrac: 0.16,
-        rmin48: 1.5,
+        volfrac: 0.2,
+        rmin48: 1.8,
         projection: true,
       };
   }
