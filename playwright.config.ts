@@ -6,6 +6,9 @@ const BASE = `http://localhost:${PORT}/strut-topology/`;
 export default defineConfig({
   testDir: 'e2e',
   fullyParallel: true,
+  // The optimiser runs in real time in every page: a few workers keep it from starving.
+  workers: process.env.CI ? 2 : 4,
+  timeout: 60_000,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? 'github' : 'list',

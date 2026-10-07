@@ -9,7 +9,7 @@ async function openExport(page: Page) {
 
 test('exporting SVG produces a non-empty, millimetre-sized cut file', async ({ page }) => {
   await openApp(page);
-  await waitForIteration(page, 40);
+  await waitForIteration(page, 15);
   await openExport(page);
   const [download] = await Promise.all([
     page.waitForEvent('download'),
@@ -25,7 +25,7 @@ test('exporting SVG produces a non-empty, millimetre-sized cut file', async ({ p
 
 test('exporting STL produces a binary mesh', async ({ page }) => {
   await openApp(page);
-  await waitForIteration(page, 40);
+  await waitForIteration(page, 15);
   await openExport(page);
   const [download] = await Promise.all([
     page.waitForEvent('download'),

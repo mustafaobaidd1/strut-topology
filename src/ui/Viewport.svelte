@@ -400,6 +400,9 @@
 
   function onPointerDown(e: PointerEvent) {
     if (!app.editable || e.button > 0) return;
+    // Only presses on the drawing itself: overlay buttons (banner, call to action) keep their
+    // clicks, which pointer capture would otherwise retarget to the container.
+    if (e.target !== container && !(e.target instanceof HTMLCanvasElement)) return;
     const [x, y] = local(e);
     const p = domainAt(e);
     container!.setPointerCapture(e.pointerId);
