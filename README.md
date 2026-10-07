@@ -112,7 +112,7 @@ engineering calculator. The finite elements, the gradient and the optimiser are 
 closed-form results and published values below; real parts need stress, buckling, fatigue and
 manufacturing checks that Strut does not do.
 
-Unit tests (`npm test`, 79 tests) cover the checks marked _unit_; `npm run validate` runs the slower
+Unit tests (`npm test`, 77 tests) cover the checks marked _unit_; `npm run validate` runs the slower
 ones and writes [docs/validation-results.md](docs/validation-results.md).
 
 | Check                                                                           | Reference                                     | Result                                                                                                                                  |
@@ -159,7 +159,7 @@ so no reference value is claimed for it.
 
 - **DTU TopOpt App** (Aage, Nobel-Jørgensen, Andreasen & Sigmund 2013): the reference for
   interactive topology optimisation — drag loads and supports and watch the design follow, on phones,
-  tablets, desktops and the web (Unity/C#). It is more polished and also does 3D. Strut differs in
+  tablets, desktops and the web (Unity/C#), with a separate 3D version. It is more polished. Strut differs in
   being open source and browser-native, exposing the filter radius, penalty, projection and mesh,
   adding stress, energy and deformation views, a reference mode that reproduces the published
   numbers, and SVG/STL export for fabrication.
